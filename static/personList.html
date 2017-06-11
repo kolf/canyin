@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        .personMap{width: 500px;height: 500px; float: left;margin:10px;}
+    </style>
+    <script src="https://cdn.bootcss.com/jquery/1.2.3/jquery.min.js"></script>
+    <script src="https://cdn.bootcss.com/echarts/3.6.1/echarts.min.js"></script>
+    <script>
+        $(function () {
+            // 基于准备好的dom，初始化echarts实例
+            // var myChart = echarts.init($('#main')[0]);
+            var init = [
+                { value: 335, name: '非常不满意（0分）' },
+                { value: 310, name: '不满意（1-3分）' },
+                { value: 234, name: '一般般（4-6分）' },
+                { value: 135, name: '满意（7-9分）' },
+                { value: 1548, name: '非常满意（10分）' }
+            ];
+
+            // $('.personMap').each(function(){
+            //     var obj = echarts.init(this);
+            //     draw(obj, '用户满意度调查' ,init)
+            // })
+
+            fatchData();
+
+            function draw(obj, title, data) {
+                console.log(obj)
+                var option = {
+                    title: {
+                        text: title,
+                        x: 'center'
+                    },
+                    tooltip: {
+                        trigger: 'item',
+                        formatter: "{a} <br/>{b} : {c} ({d}%)"
+                    },
+                    series: [{
+                        name: '评分',
+                        type: 'pie',
+                        radius: '55%',
+                        center: ['50%', '60%'],
+                        data: data || [],
+                        itemStyle: {
+                            emphasis: {
+                                shadowBlur: 10,
+                                shadowOffsetX: 0,
+                                shadowColor: 'rgba(0, 0, 0, 0.5)'
+                            }
+                        }
+                    }
+                    ]
+                };
+
+                obj.setOption(option);
+            }
+
+            function fatchData() {
+                $.post('/api/controller/Answer.ashx?action=queryreport', {
+                    // areaId: 1,
+                    // restaurantsId: 2,
+                    questionnairId: 2
+                }, function (res) {
+                    const resData =JSON.parse(res);
+                    if(resData.result=='success'){
+                        console.log(resData)
+                        var list = resData.data.QuestionInfos.forEach(function(item){
+                            if(item.OptionList && item.OptionList.length){
+                                $('<div class="personMap"></div>').data('data', item).appendTo($('.personMaps'))
+                            }
+                        });
+
+                        $('.personMap').each(function(){
+                            var obj = echarts.init(this);
+                            var title = $(this).data('data').QuestionInfo.QuestionName;
+                            var data = $(this).data('data').OptionList.map(function(item, i){
+                                return { 
+                                    value: item.Other1, 
+                                    name: item.OptionName
+                                }
+                                console.log(item)
+                            })
+                            // console.log($(this).data('data'))
+                            // var title = item.QuestionInfo.QuestionName;
+                            draw(obj, title , data)
+                        })
+                    }
+                })
+            }
+        })
+    </script>
+</head>
+
+<body>
+    <div class="personMaps">
+        <!--<div class="personMap"></div>
+        <div class="personMap"></div>
+        <div class="personMap"></div>
+        <div class="personMap"></div>
+        <div class="personMap"></div>
+        <div class="personMap"></div>-->
+    </div>
+    <!--<div id="main" style="width: 600px;height:400px;"></div>-->
+</body>
+
+</html>
